@@ -37,13 +37,15 @@ const hydrateImages = (res) => {
 
 
 const compareImages = (res) => {
-	artAr.forEach((art, i) => {
-		resemble(fs.readFileSync(`${uploads}art${i}.jpg`))				//scaleToSameSize does not work with node-resemble-js; we will 
-			.compareTo(fs.readFileSync(`${uploads}peacock.png`))
-			.ignoreColors()
-			.scaleToSameSize()
-			.onComplete((data) => compareAr.push(data))
-	})
+	if (compareAr.length === 0) {
+		artAr.forEach((art, i) => {
+			resemble(fs.readFileSync(`${uploads}art${i}.jpg`))				//scaleToSameSize does not work with node-resemble-js; we will 
+				.compareTo(fs.readFileSync(`${uploads}peacock.png`))
+				.ignoreColors()
+				.scaleToSameSize()
+				.onComplete((data) => compareAr.push(data))
+		})
+	}
 	findClosestMatch(res)
 }
 
@@ -52,15 +54,14 @@ const findClosestMatch = (res) => {
 	let matchIndex;
 	let closestMatch = compareAr.reduce((a,b, i) => {
 		if (a.rawMisMatchPercentage < b.rawMisMatchPercentage) {
-			console.log('a more similar, matchIndex: ', matchIndex)
+			console.log('a more similar, matchIndex: ', matchIndex, compareAr.length)
 			return a;
 		} else { 
 			matchIndex = i
-			console.log('b more similar, matchIndex: ', matchIndex)
+			console.log('b more similar, matchIndex: ', matchIndex, compareAr.length)
 			return b 
 		}
 	})
-
 	res.sendFile(path.join(`${uploads}art${matchIndex}.jpg`))
 }
 
