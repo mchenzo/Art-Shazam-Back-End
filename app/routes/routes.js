@@ -5,6 +5,7 @@ const fileType = require('file-type');
 const axios = require('axios');
 const path = require('path');
 const uploads = '/Users/michaelchen/Desktop/resemble-uploads/';
+const moment = require('moment');
 
 
 //PROVIDE ABSOLUTE URLs
@@ -19,7 +20,9 @@ const hydrateImages = (res) => {
 		.then((response) => { response.data.data.forEach((art, i) => { 
 			let droplet = {
 				id: art.objectid,
-				artist: art.artistname,
+				artistFirst: art.artistfirst,
+				artistLast: art.artistlast,
+				created: moment(art.creationdate).format('YYYY'),
 				title: art.title,
 				medium: art.medium,
 				url: `http://api.collectorsystems.com/287/objects/${art.objectid}/mainimage`
@@ -37,17 +40,25 @@ const hydrateImages = (res) => {
 
 
 const compareImages = (path, res) => {
-	if (compareAr.length === 0) {
-		artAr.forEach((art, i) => {
-			console.log('when does i become 31????', i)
-			resemble(fs.readFileSync(`${uploads}art${i}.jpg`))				//scaleToSameSize does not work with node-resemble-js; we will 
-				.compareTo(fs.readFileSync(path))
-				.ignoreColors()
-				.scaleToSameSize()
-				.onComplete((data) => compareAr.push(data))
-		})
-	}
-	findClosestMatch(res)
+	try {
+		if (compareAr.length === 0) {
+			artAr.forEach((art, i) => {
+				if (i === 31) {
+					let breakException = 'break'
+					throw breakException;
+				}
+				resemble(fs.readFileSync(`${uploads}art${i}.jpg`))				//scaleToSameSize does not work with node-resemble-js; we will 
+					.compareTo(fs.readFileSync(path))
+					.ignoreColors()
+					.scaleToSameSize()
+					.onComplete((data) => compareAr.push(data))
+			})
+		}
+		findClosestMatch(res);
+	} catch (err) {
+		if (err !== 'break') console.log('error: ' + err)
+		else findClosestMatch(res)
+	} 
 }
 
 
@@ -63,7 +74,9 @@ const findClosestMatch = (res) => {
 	})
 	let response = {
 		path: `${uploads}art${matchIndex}.jpg`,
-		artist: artAr[matchIndex].artist,
+		artistFirst: artAr[matchIndex].artistFirst,
+		artistLast: artAr[matchIndex].artistLast,
+		created: artAr[matchIndex].created,
 		title: artAr[matchIndex].title,
 		medium: artAr[matchIndex].medium,
 	}
@@ -87,7 +100,7 @@ module.exports = function(app, db) {
 	app.get('/hydrate', (req, res) => {
 		console.log('FRONT END IS THIRSTY!!!!!!!!!')
 		hydrateImages(res)
-		res.send(`I ain't thirsty any more`)
+		res.send(`App ain't thirsty any more`)
 	})
 
 	app.post('/compare', (req, res) => {
