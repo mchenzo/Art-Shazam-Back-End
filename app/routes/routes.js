@@ -36,11 +36,12 @@ const hydrateImages = (res) => {
 
 
 
-const compareImages = (res) => {
+const compareImages = (path, res) => {
 	if (compareAr.length === 0) {
 		artAr.forEach((art, i) => {
+			console.log('when does i become 31????', i)
 			resemble(fs.readFileSync(`${uploads}art${i}.jpg`))				//scaleToSameSize does not work with node-resemble-js; we will 
-				.compareTo(fs.readFileSync(`${uploads}peacock.png`))
+				.compareTo(fs.readFileSync(path))
 				.ignoreColors()
 				.scaleToSameSize()
 				.onComplete((data) => compareAr.push(data))
@@ -54,15 +55,19 @@ const findClosestMatch = (res) => {
 	let matchIndex;
 	let closestMatch = compareAr.reduce((a,b, i) => {
 		if (a.rawMisMatchPercentage < b.rawMisMatchPercentage) {
-			console.log('a more similar, matchIndex: ', matchIndex, compareAr.length)
 			return a;
 		} else { 
 			matchIndex = i
-			console.log('b more similar, matchIndex: ', matchIndex, compareAr.length)
-			return b 
+			return b;
 		}
 	})
-	res.sendFile(path.join(`${uploads}art${matchIndex}.jpg`))
+	let response = {
+		path: `${uploads}art${matchIndex}.jpg`,
+		artist: artAr[matchIndex].artist,
+		title: artAr[matchIndex].title,
+		medium: artAr[matchIndex].medium,
+	}
+	res.send(response);
 }
 
 
@@ -80,11 +85,13 @@ module.exports = function(app, db) {
 	})
 
 	app.get('/hydrate', (req, res) => {
+		console.log('FRONT END IS THIRSTY!!!!!!!!!')
 		hydrateImages(res)
 		res.send(`I ain't thirsty any more`)
 	})
 
-	app.get('/compare', (req, res) => {
-		compareImages(res)
+	app.post('/compare', (req, res) => {
+		console.log('FRONT END CALLED FOR A COMPARE!!!!!!!!!', req.body.path)
+		compareImages(req.body.path, res)
 	})
 };
