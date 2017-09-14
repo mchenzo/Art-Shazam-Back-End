@@ -43,21 +43,18 @@ const compareImages = (path, res) => {
 	try {
 		if (compareAr.length === 0) {
 			artAr.forEach((art, i) => {
-				if (i === 31) {
-					let breakException = 'break'
-					throw breakException;
+				if (i !== 31) {
+					resemble(fs.readFileSync(`${uploads}art${i}.jpg`))
+						.compareTo(fs.readFileSync(path))
+						.ignoreColors()
+						.scaleToSameSize()
+						.onComplete((data) => compareAr.push(data))
 				}
-				resemble(fs.readFileSync(`${uploads}art${i}.jpg`))				//scaleToSameSize does not work with node-resemble-js; we will 
-					.compareTo(fs.readFileSync(path))
-					.ignoreColors()
-					.scaleToSameSize()
-					.onComplete((data) => compareAr.push(data))
 			})
 		}
 		findClosestMatch(res);
 	} catch (err) {
-		if (err !== 'break') console.log('error: ' + err)
-		else findClosestMatch(res)
+		console.log('error at compareImages: ' + err)
 	} 
 }
 
